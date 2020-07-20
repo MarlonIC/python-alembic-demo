@@ -5,6 +5,16 @@ from sqlalchemy import pool
 
 from alembic import context
 
+import os
+import importlib.util
+spec_account = importlib.util.spec_from_file_location('Account', os.path.join(os.getcwd(), 'alembic/model/account.py'))
+spec_user = importlib.util.spec_from_file_location('User', os.path.join(os.getcwd(), 'alembic/model/user.py'))
+account = importlib.util.module_from_spec(spec_account)
+user = importlib.util.module_from_spec(spec_user)
+spec_account.loader.exec_module(account)
+spec_user.loader.exec_module(user)
+
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
@@ -17,7 +27,7 @@ fileConfig(config.config_file_name)
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = None
+target_metadata = [account.Base.metadata, user.Base.metadata]
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -64,7 +74,8 @@ def run_migrations_online():
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata
         )
 
         with context.begin_transaction():
